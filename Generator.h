@@ -23,7 +23,7 @@ inline void printIncludeAndProto(FILE* fout)
 
 inline void printProlog(FILE* fout)
 {
-		fprintf(fout, "\n.code\n");
+	fprintf(fout, "\n.code\n");
 	fprintf(fout, "mainCRTStartup proc\n");
 	fprintf(fout, "sub rsp, 28h\n");
 }
@@ -39,6 +39,13 @@ inline void printGlobalVariables(FILE* f)
 
 inline void printEpilog(FILE* f)
 {
+	fprintf(f, "\tjmp __end\n");
+	fprintf(f, "\t__end200:\n");
+	fputs("\tinvoke printf, cfm$(\"\\nVariable that doesn't belong to the Integer\\n\") \n ", f);
+	fprintf(f, "\tjmp __end\n");
+	fprintf(f, "\t__end201:\n");
+	fputs("\tinvoke printf, cfm$(\"\\nPut var that doesn't belong to the Integer\\n\") \n ", f);
+	fprintf(f, "\t__end:\n");
 	if (isDivOrModPresent)
 	{
 		fputs("jmp __exit\n", f);
@@ -129,7 +136,7 @@ inline bool Prioritet(TypeOfLex t, StackType s)
 // Generate sequence number of tokens in massive Reverse Polish Notation.
 inline  int ConvertToReversePolishNotation(int i)
 {
-	myStack.init(&myStack.stackType);
+	 myStack.init(&myStack.stackType);
 	 int z;
 	 int n = 0;
 		if ((Data.LexTable[i - 1].type != If))
@@ -300,7 +307,7 @@ inline void generateNOT(FILE* f)
 	fprintf(f, "\tcmp %s, 0\n", registerList[index]);
 	fprintf(f, "\tje to_assign_one%d \n", labelIndex);
 	fprintf(f, "\tmov %s, 0\n", registerList[index]);
-		fprintf(f, "\tjmp finish_assign%d \n", labelIndex);
+	fprintf(f, "\tjmp finish_assign%d \n", labelIndex);
 	fprintf(f, "to_assign_one%d:\n", labelIndex);
 	fprintf(f, "\tmov %s, 1\n", registerList[index]);
 	fprintf(f, "finish_assign%d:\n", labelIndex);
@@ -400,8 +407,9 @@ inline void generateAssemblyCodeRPN(const char* str, FILE* f)
 
 inline void printCode(FILE* f)
 {
+	int num = 200;
 	int ifLabelIndex = 0;
-		Lexem currentLexem;
+	Lexem currentLexem;
 	int lexemIndex = 0;
 	do
 	{
@@ -478,7 +486,7 @@ inline void printCode(FILE* f)
 		{
 			fprintf(f, "%s:\n", Data.LexTable[lexemIndex].name);
 		}
-		if (currentLexem.type == Get)
+		if (currentLexem.type == Write)
 		{
 			lexemIndex = ConvertToReversePolishNotation(lexemIndex + 1);
 			if (isStringConst != -1)
@@ -489,12 +497,22 @@ inline void printCode(FILE* f)
 			else
 			{
 				generateAssemblyCodeRPN("buf", f);
+				fprintf(f, "\tmov r8, buf\n");
+				fprintf(f, "\tcmp r8, 2147483647\n");
+				fprintf(f, "\tjge __end201\n");
+				fprintf(f, "\tcmp r8, -2147483648\n");
+				fprintf(f, "\tjl __end201\n");
 				fprintf(f, "\tinvoke printf, \" %%lld\", buf\n");
 			}
 		}
-		if (currentLexem.type == Put)
+		if (currentLexem.type == Read)
 		{
 			fprintf(f, "\tinvoke scanf, \"%%lld\", addr %s\n", Data.LexTable[lexemIndex + 2].name);
+			fprintf(f, "\tmov r8, %s\n", Data.LexTable[lexemIndex + 2].name);
+			fprintf(f, "\tcmp r8, 2147483647\n");
+			fprintf(f, "\tjge __end200\n");
+			fprintf(f, "\tcmp r8, -2147483648\n");
+			fprintf(f, "\tjl __end200\n");
 			lexemIndex += 4;
 		}
 		if (currentLexem.type == Assign && (Data.LexTable[lexemIndex - 3].type != If))

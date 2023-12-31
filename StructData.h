@@ -22,8 +22,8 @@ enum TypeOfLex{
 	Identifier,			// Identifier
 	EndBlock,			// STOP
 
-	Get,				// READ
-	Put,				// WRITE
+	Write,				// WRITE
+	Read,				// READ
 
 	If,					// IF
 	Else,				// ELSE
@@ -85,6 +85,7 @@ typedef struct ID
 	std::string str;
 	char name[50];
 	int value;
+	int line;
 }IdentificatorR;
 
 typedef struct L 

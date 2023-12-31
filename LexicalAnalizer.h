@@ -84,7 +84,7 @@ int GetTokens(FILE* in_fileName)
 			for (j = 1; j < i; j++)
 			{
 				if (islower(buf[0])) {
-					if (!islower(buf[j])) break;
+					if (isupper(buf[j])) break;
 				}
 			}
 			if (ch == ':' && (j == i) && (i <= 6) && islower(buf[0])) {
@@ -145,10 +145,10 @@ int GetTokens(FILE* in_fileName)
 				temp_type = VarType;
 			else if (!strcmp(buf, "STOP"))
 				temp_type = EndBlock;
-			else if (!strcmp(buf, "READ"))
-				temp_type = Get;
 			else if (!strcmp(buf, "WRITE"))
-				temp_type = Put;
+				temp_type = Write;
+			else if (!strcmp(buf, "READ"))
+				temp_type = Read;
 			else if (!strcmp(buf, "IF"))
 				temp_type = If;
 			else if (!strcmp(buf, "ELSE"))
@@ -355,7 +355,10 @@ int GetTokens(FILE* in_fileName)
 					for (i = 1;; ++i)
 					{
 						ch = getc(in_fileName);
-						if (ch != '>') buf[i] = ch;
+						if (!isupper(ch) && i < 6 && ch != '>' && !isupper(c)) { buf[i] = ch; }
+						else if (ch == '>' || isupper(ch) || i==6) {
+							break;
+						}
 						else break;
 					}
 					isProgramName = true;
@@ -551,9 +554,9 @@ void PrintTokensToFile(char* in_fileName, int TokensNum)
 	}
 	char type_tokens[20];
 	fprintf(F, "-------------------------------------------------------------------------------- - \n");
-	fprintf(F, "| TOKEN TABLE 	 | \n");
+	fprintf(F, "| TOKEN TABLE | \n");
 	fprintf(F, "--------------------------------------------------------------------------------\n");
-	fprintf(F, "| line number | token | identValue | token code | type of token | \n");
+	fprintf(F, "| line number |      token      |   identValue   | token code |  type of token | \n");
 	fprintf(F, "--------------------------------------------------------------------------------");
 
 	for (unsigned int i = 0; i < TokensNum; i++)
@@ -584,10 +587,10 @@ void PrintTokensToFile(char* in_fileName, int TokensNum)
 		case EndBlock:
 			strcpy_s(type_tokens, "STOP");
 			break;
-		case Put:
+		case Read:
 			strcpy_s(type_tokens, "READ");
 			break;
-		case Get:
+		case Write:
 			strcpy_s(type_tokens, "WRITE");
 			break;
 		case If:
@@ -675,7 +678,7 @@ void PrintTokensToFile(char* in_fileName, int TokensNum)
 		}
 		if (Data.LexTable[i].type != Str)
 		{
-			fprintf(F, "\n|%12d |%16s |%16d |%20d | %-13s |\n",
+			fprintf(F, "\n|%12d |%16s |%15d |%11d | %-14s |\n",
 				Data.LexTable[i].line,
 				Data.LexTable[i].name,
 				Data.LexTable[i].value,
@@ -683,7 +686,7 @@ void PrintTokensToFile(char* in_fileName, int TokensNum)
 		}
 		else
 		{
-			fprintf(F, "\n|%12d |%16s |%16s |%11d | %-13s |\n",
+			fprintf(F, "\n|%12d |%16s |%15s |%11d | %-14s |\n",
 				Data.LexTable[i].line,
 				Data.LexTable[i].name,
 				Data.LexTable[i].str,

@@ -1,3 +1,4 @@
+#pragma once
 
 #include "LexicalAnalizer.h"
 #include <iostream>
@@ -273,6 +274,7 @@ inline int handleError(const std::string& filename)
 
 		if (Data.LexTable[count].type == Label) {
 			Data.TabelLabel[countLabel].str = Data.LexTable[count].name;
+			Data.TabelLabel[countLabel].line = Data.LexTable[count].line;
 			countLabel++;
 		}
 		else if (Data.LexTable[count].type == LabelName) {
@@ -286,20 +288,20 @@ inline int handleError(const std::string& filename)
 			vector_iterator++;
 		}
 	}
-	
-	
-	int size;
-	if (countLabel < countlabelName)
-		size = countlabelName;
-	else
-		size = countLabel;
-	for (int k = 0; k < size; k++) {
-		if (Data.TabelLabel[k].str != Data.TabelLabelName[k].str) {
+	for (int k = 0; k < countLabel; ++k) {
+		bool found = false;
+		for (int t = 0; t < countlabelName; ++t) {
+			if (Data.TabelLabel[k].str == Data.TabelLabelName[t].str) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
 			err_num++;
-			fprintf(ef, "\tMissing Label or Goto statement!\n");
+			fprintf(ef, "line %d: \tThe '%s' label has no equivalent!\n", Data.TabelLabel[k].line, Data.TabelLabel[k].str);
 		}
 	}
-
+	
 	vector_iterator = 0;
 	while (count_of_var_types)
 	{
@@ -464,7 +466,7 @@ inline int handleError(const std::string& filename)
 				err_num = err_num + buf;
 			}
 
-			if (Data.LexTable[j].type == Get)
+			if (Data.LexTable[j].type == Write)
 			{
 				int buf, brak;
 				if (Data.LexTable[j + 1].type != LBraket)
@@ -486,7 +488,7 @@ inline int handleError(const std::string& filename)
 					fprintf(ef, "line %d: \t')' expected!\n", Data.LexTable[j].line);
 				}
 			}
-			if (Data.LexTable[j].type == Put)
+			if (Data.LexTable[j].type == Read)
 			{
 				int cnt{};
 				if (Data.LexTable[j + 1].type != LBraket)
